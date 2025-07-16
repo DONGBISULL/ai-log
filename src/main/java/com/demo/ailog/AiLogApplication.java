@@ -1,0 +1,15 @@
+package com.demo.ailog;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+
+@SpringBootApplication
+public class AiLogApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(AiLogApplication.class, args);
+    }
+
+}

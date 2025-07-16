@@ -1,0 +1,7 @@
+### GET request to example server
+GET http://localhost:8084/analogy?startTime=2025-07-16T00:00:00&endTime=2025-07-16T23:59:59.999999999&modelId=ollama3
+
+### GET request to example server
+GET http://localhost:8084/analogy?modelId=ollama3
+
+###
