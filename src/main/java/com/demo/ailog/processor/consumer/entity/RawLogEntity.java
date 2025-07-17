@@ -58,9 +58,6 @@ public class RawLogEntity {
     @Column(columnDefinition = "TEXT")
     private String message;           // 실제 로그 메시지
 
-    @Column(columnDefinition = "TEXT")
-    private String summary;         // 요약 메세지
-
     @Column
     private String logHash;
 

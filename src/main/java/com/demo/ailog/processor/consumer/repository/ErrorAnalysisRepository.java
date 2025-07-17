@@ -5,10 +5,13 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ErrorAnalysisRepository extends JpaRepository<ErrorAnalysis, Long> {
 
     List<ErrorAnalysis> findAllByRawLogIdIn(List<Long> rawLogIds);
 
     boolean existsByRawLogId(Long rawLogId);
+
+    Optional<ErrorAnalysis> findByRawLogId(Long rawLogId);
 }

@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +30,15 @@ public class ErrorAnalysisService {
     public boolean existsByRawId(Long id) {
         return repository.existsByRawLogId(id);
     }
+
+    public ErrorAnalysisDTO findByRawId(Long id) {
+        return mapper.toDTO(get(id));
+    }
+
+    public ErrorAnalysis get(Long id) {
+        return repository.findByRawLogId(id).orElseThrow(NoSuchElementException::new);
+    }
+
 
     public List<ErrorAnalysisDTO> listInRawId(List<Long> rawIds) {
         List<ErrorAnalysis> list = repository.findAllByRawLogIdIn(rawIds);

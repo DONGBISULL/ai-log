@@ -3,19 +3,15 @@ package com.demo.ailog.processor.schedular;
 import com.demo.ailog.analogy.service.AnalogyService;
 import com.demo.ailog.common.enums.LogLevel;
 import com.demo.ailog.common.enums.TaskType;
-import com.demo.ailog.processor.consumer.domain.ErrorAnalysisDTO;
 import com.demo.ailog.processor.consumer.entity.RawLogEntity;
-import com.demo.ailog.processor.consumer.parser.LogHashGenerator;
 import com.demo.ailog.processor.consumer.service.ErrorAnalysisService;
 import com.demo.ailog.processor.consumer.service.FailedTaskService;
 import com.demo.ailog.processor.consumer.service.LogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 @Component
@@ -31,9 +27,9 @@ public class AIErrorAnalysisSchedular {
 
     private final FailedTaskService failedTaskService;
 
-    //    @Scheduled(fixedDelay = 60000 * 2)
+    @Scheduled(fixedDelay = 60000 * 5)
     public void summarizeLogs() {
-        List<RawLogEntity> targets = service.findTop100ByProcessedFalseAndLogLevelIn(
+        List<RawLogEntity> targets = service.findByProcessedFalseAndLogLevelIn(
                 List.of(LogLevel.ERROR, LogLevel.WARN)
         );
         int successCount = 0;

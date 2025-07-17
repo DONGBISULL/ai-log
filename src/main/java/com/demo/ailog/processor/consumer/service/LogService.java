@@ -9,10 +9,11 @@ import com.demo.ailog.processor.consumer.repository.RawLogRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,6 +22,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class LogService {
+
+    @Value("${log-processing.limit-size}")
+    private int limitSize;
 
     private final RawLogMapper mapper;
 
@@ -40,27 +44,14 @@ public class LogService {
         return repository.findByTimestampBetween(startDate, endDate);
     }
 
-    public List<RawLogEntity> findTop100ByProcessedFalseAndLogLevelIn(List<LogLevel> logLevels) {
-        return repository.findTop100ByProcessedFalseAndLogLevelIn(logLevels);
+    public List<RawLogEntity> findByProcessedFalseAndLogLevelIn(List<LogLevel> logLevels) {
+        return repository.findByProcessedFalseAndLogLevelIn(logLevels, limitSize);
     }
 
     @Transactional
     public void updateProcessed(Long id) {
-        log.info("========updateProcessedAndSummary========");
-        repository.updateProcessed(id); // processed=true, summary 저장
-    }
-
-    // 재시도 로직이 포함된 업데이트 메서드 추가
-    @Retryable(value = {Exception.class}, maxAttempts = 3, backoff = @Backoff(delay = 1000))
-    @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public void updateProcessedAndSummaryWithRetry(Long id, String summary) {
-        try {
-            log.info("========updateProcessedAndSummaryWithRetry========");
-            repository.updateProcessedAndSummary(id, summary);
-        } catch (Exception e) {
-            log.error("DB 업데이트 실패, 재시도 중... id: {}", id, e);
-            throw e;
-        }
+        log.info("========updateProcessed========");
+        repository.updateProcessed(id); // processed=true 저장
     }
 
     @Transactional
