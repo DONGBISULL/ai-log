@@ -22,7 +22,7 @@ public class ErrorAnalysis {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private Long rawLogId;        // Raw 로그 ID 참조
 
     @Column(length = 100) //

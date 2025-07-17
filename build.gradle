@@ -59,7 +59,8 @@ dependencies {
     // gemini - vertex  유료라 우회 방식으로 연결
     // implementation 'org.springframework.ai:spring-ai-starter-model-vertex-ai-gemini:1.0.0'
     implementation 'org.springframework.ai:spring-ai-starter-model-openai:1.0.0'
-
+    // Spring ai vector DB
+    implementation 'org.springframework.ai:spring-ai-pgvector-store:1.0.0'
     /* mapstruct */
     implementation 'org.mapstruct:mapstruct:1.6.3'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'

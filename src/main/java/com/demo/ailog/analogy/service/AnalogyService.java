@@ -1,6 +1,7 @@
 package com.demo.ailog.analogy.service;
 
 import com.demo.ailog.analogy.domain.BaseSearchDTO;
+import com.demo.ailog.embed.service.EmbeddingService;
 import com.demo.ailog.processor.consumer.domain.ErrorAnalysisDTO;
 import com.demo.ailog.processor.consumer.entity.RawLogEntity;
 import com.demo.ailog.processor.consumer.parser.LogHashGenerator;
@@ -10,6 +11,7 @@ import com.demo.ailog.processor.consumer.service.LogService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.document.Document;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -36,12 +38,15 @@ public class AnalogyService {
 
     private final ErrorAnalysisService errorAnalysisService;
 
+    private final EmbeddingService embeddingService;
+
     private final LogService service;
 
-    public AnalogyService(ChatClient chatClient, LogParserManager parserManager, ErrorAnalysisService errorAnalysisService, LogService service) {
+    public AnalogyService(ChatClient chatClient, LogParserManager parserManager, ErrorAnalysisService errorAnalysisService, EmbeddingService embeddingService, LogService service) {
         this.chatClient = chatClient;
         this.parserManager = parserManager;
         this.errorAnalysisService = errorAnalysisService;
+        this.embeddingService = embeddingService;
         this.service = service;
     }
 
@@ -51,13 +56,26 @@ public class AnalogyService {
             log.info("Already analyzed rawLogId: {}", entity.getId());
             return;
         }
-        ErrorAnalysisDTO analysis = summarize(entity.getMessage());
-        log.info(" >>>>> {} ", analysis);
-        analysis.setRawLogId(entity.getId());
-        log.info(" generateLogHash {} ", LogHashGenerator.generateLogHash(analysis.getErrorType() + " " + analysis.getNormalizedPattern()));
-        analysis.setPatternHash(LogHashGenerator.generateLogHash(analysis.getErrorType() + " " + analysis.getNormalizedPattern()));
-        ErrorAnalysisDTO add = errorAnalysisService.add(analysis);
-        log.info(" >>>>> {} ", add);
+        Document document = embeddingService.getDocument(entity.getMessage());
+        ErrorAnalysisDTO newLog = null;
+
+        if (document != null) {
+            String rawLogId = document.getMetadata().get("rawLogId").toString();
+            ErrorAnalysisDTO target = errorAnalysisService.findByRawId(Long.valueOf(rawLogId));
+            newLog = target.toBuilder()
+                    .id(null)
+                    .rawLogId(Long.valueOf(entity.getId()))
+                    .build();
+        } else {
+            newLog = summarize(entity.getMessage());
+            log.info(" >>>>> {} ", newLog);
+            newLog.setRawLogId(entity.getId());
+            log.info(" generateLogHash {} ", LogHashGenerator.generateLogHash(newLog.getErrorType() + " " + newLog.getNormalizedPattern()));
+            newLog.setPatternHash(LogHashGenerator.generateLogHash(newLog.getErrorType() + " " + newLog.getNormalizedPattern()));
+            embeddingService.addVectorLog(entity.getMessage(), newLog);
+        }
+        log.info(" >>>>> {} ", newLog);
+        errorAnalysisService.add(newLog);
         service.updateProcessed(entity.getId());
     }
 

@@ -23,11 +23,9 @@ public class AIErrorAnalysisSchedular {
 
     private final AnalogyService analogyService;
 
-    private final ErrorAnalysisService errorAnalysisService;
-
     private final FailedTaskService failedTaskService;
 
-    @Scheduled(fixedDelay = 60000 * 5)
+    @Scheduled(fixedDelay = 60000 * 3)
     public void summarizeLogs() {
         List<RawLogEntity> targets = service.findByProcessedFalseAndLogLevelIn(
                 List.of(LogLevel.ERROR, LogLevel.WARN)
@@ -45,6 +43,5 @@ public class AIErrorAnalysisSchedular {
         }
         log.info("로그 처리 완료 - 성공: {}, 실패: {}", successCount, failCount);
     }
-
 
 }

@@ -45,7 +45,8 @@ public class LogService {
     }
 
     public List<RawLogEntity> findByProcessedFalseAndLogLevelIn(List<LogLevel> logLevels) {
-        return repository.findByProcessedFalseAndLogLevelIn(logLevels, limitSize);
+        List<String> targets = logLevels.stream().map(LogLevel::getLevelName).toList();
+        return repository.findByProcessedFalseAndLogLevelIn(targets, limitSize);
     }
 
     @Transactional
