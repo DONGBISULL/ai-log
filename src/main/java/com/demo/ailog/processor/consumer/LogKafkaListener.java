@@ -26,16 +26,16 @@ public class LogKafkaListener {
      * @param record
      * @param ack    카프카에서 로그 다 읽었다는걸 확인 시키기 위해 사용
      */
-    @KafkaListener(topics = "raw-logs.spring")
+    @KafkaListener(topics = {"raw-logs.spring", "raw-logs.nginx"})
     @Transactional
-    public void listen(ConsumerRecord<String, String> record, @Header(name = "traceId", required = false) String traceId, @Header(name = "spanId", required = false) String spanId, Acknowledgment ack) {
+    public void springListen(ConsumerRecord<String, String> record, @Header(name = "traceId", required = false) String traceId, @Header(name = "spanId", required = false) String spanId, Acknowledgment ack) {
         try {
             String value = record.value();
             String topic = record.topic();
             String[] topicParts = topic.split("\\.");
             String appType = topicParts.length > 1 ? topicParts[1] : "unknown";
-            log.info("Kafka 로그 수신: topic >> {}", topic);
-            log.info("Kafka 로그 수신: value >>{}", value);
+            log.info("Kafka spring 로그 수신: topic >> {}", topic);
+            log.info("Kafka spring 로그 수신: value >>{}", value);
             service.process(traceId, spanId, appType, value);
             ack.acknowledge(); // 정상 처리 후에만 커밋
         } catch (LogParsingException e) {
@@ -49,5 +49,6 @@ public class LogKafkaListener {
             throw new RuntimeException(e);
         }
     }
+
 
 }

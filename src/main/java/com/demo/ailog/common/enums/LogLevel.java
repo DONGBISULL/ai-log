@@ -61,6 +61,22 @@ public enum LogLevel {
         return KEYWORD_LEVEL_MAP.getOrDefault(keyword.toLowerCase(), UNKNOWN);
     }
 
+    public static LogLevel fromStatusCode(Integer statusCode) {
+        if (statusCode == null) return UNKNOWN;
+
+        if (statusCode >= 500) {
+            return ERROR;  // 서버 에러
+        } else if (statusCode >= 400) {
+            return WARN;   // 클라이언트 에러 (4xx를 WARN으로 처리)
+        } else if (statusCode >= 300) {
+            return INFO;   // 리다이렉션
+        } else if (statusCode >= 200) {
+            return DEBUG;  // 성공
+        } else {
+            return UNKNOWN;
+        }
+    }
+
     public static Map<String, LogLevel> getKeywordLevelMap(String rawLog) {
         return new HashMap<>(KEYWORD_LEVEL_MAP);
     }

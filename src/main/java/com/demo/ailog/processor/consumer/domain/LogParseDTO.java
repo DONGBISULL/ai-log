@@ -25,6 +25,7 @@ public class LogParseDTO {
     String appType;
     String metadata;
     String logHash;
+    Boolean processed;
 
     /**
      * 공통 필드 유효성 검증

@@ -25,14 +25,15 @@ public class LogParserManager {
 
     private final ObjectMapper objectMapper;
 
+    private final LogLevelExtractorManager manager;
+
     public LogParseDTO parse(String appType, String rawLog) throws JsonProcessingException, NoSuchAlgorithmException {
         LogParseDTO target = null;
         JsonNode jsonNode = objectMapper.readTree(rawLog);
 
         if (jsonNode != null) {
             String message = jsonNode.path("message").asText();
-            LogLevel logLevel = LogLevelExtractor.extractLogLevel(message);
-
+            LogLevel logLevel = manager.extractLogLevel(appType, message);
             HashMap<String, Object> metadataMap = new HashMap<>();
             metadataMap.put("agent", jsonNode.get("agent"));
             metadataMap.put("host", jsonNode.get("host"));
@@ -49,6 +50,7 @@ public class LogParserManager {
                             .path("path")
                             .asText()
                     )
+                    .processed(LogLevel.isMonitored(logLevel) ? false : true)
                     .logHash(LogHashGenerator.generateLogHash(message))
                     .message(message)
                     .appType(appType)
