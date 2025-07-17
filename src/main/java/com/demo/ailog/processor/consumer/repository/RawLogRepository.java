@@ -1,9 +1,6 @@
 package com.demo.ailog.processor.consumer.repository;
 
 import com.demo.ailog.processor.consumer.entity.RawLogEntity;
-import com.demo.ailog.common.enums.LogLevel;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -17,10 +14,16 @@ public interface RawLogRepository extends JpaRepository<RawLogEntity, Long> {
     List<RawLogEntity> findByTimestampBetween(LocalDateTime startDate, LocalDateTime endDate);
 
     @Query(
-            value = "SELECT * FROM raw_log WHERE processed = false AND log_level IN (:logLevels) LIMIT :limit",
+            value = "select m.* from raw_logs m " +
+                    "WHERE processed = false " +
+                    "  AND log_level IN (:logLevels) " +
+                    "  AND NOT EXISTS( select 1 " +
+                    "                  from failed_tasks a " +
+                    "                  where a.raw_log_id = m.id) " +
+                    "LIMIT CAST(:limit AS INTEGER) ",
             nativeQuery = true
     )
-    List<RawLogEntity> findByProcessedFalseAndLogLevelIn(@Param("logLevels") List<LogLevel> logLevels, @Param("limit") int limit);
+    List<RawLogEntity> findByProcessedFalseAndLogLevelIn(@Param("logLevels") List<String> logLevels, @Param("limit") int limit);
 
     @Modifying
     @Query("""

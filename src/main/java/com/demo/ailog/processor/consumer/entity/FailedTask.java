@@ -26,7 +26,7 @@ public class FailedTask {
     private Long id;
 
     @Column(nullable = false)
-    private Long logId;
+    private Long rawLogId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

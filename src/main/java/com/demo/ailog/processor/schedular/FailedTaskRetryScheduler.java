@@ -23,7 +23,7 @@ public class FailedTaskRetryScheduler {
         for (FailedTask task : retryableTasks) {
             try {
                 log.info("Retrying failed task: taskId={}, logId={}, taskType={}",
-                        task.getId(), task.getLogId(), task.getTaskType());
+                        task.getId(), task.getRawLogId(), task.getTaskType());
 
                 boolean success = service.retryTask(task);
 
@@ -33,7 +33,6 @@ public class FailedTaskRetryScheduler {
                 } else {
                     service.incrementRetryCount(task.getId(), "Task execution failed");
                 }
-
             } catch (Exception e) {
                 log.error("Error during task retry: taskId={}", task.getId(), e);
                 service.incrementRetryCount(task.getId(), e.getMessage());

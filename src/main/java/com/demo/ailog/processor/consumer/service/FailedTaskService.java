@@ -27,12 +27,10 @@ public class FailedTaskService {
 
     private final AnalogyService analogyService;
 
-    private final LogService logService;
-
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void saveFailedTask(Long logId, TaskType taskType, String errorMessage) {
         FailedTask failedTask = FailedTask.builder()
-                .logId(logId)
+                .rawLogId(logId)
                 .taskType(taskType)
                 .retryCount(0)
                 .maxRetries(3)
@@ -79,9 +77,9 @@ public class FailedTaskService {
      */
     @Transactional
     public boolean retryTask(FailedTask task) {
-        RawLogEntity target = logRepository.findById(task.getLogId()).orElse(null);
+        RawLogEntity target = logRepository.findById(task.getRawLogId()).orElse(null);
         if (target == null) {
-            log.warn("Log not found for task retry: logId={}", task.getLogId());
+            log.warn("Log not found for task retry: rwaLogId={}", task.getRawLogId());
             return false;
         }
         try {
@@ -96,7 +94,7 @@ public class FailedTaskService {
             }
         } catch (Exception e) {
             log.error("Task execution failed: taskType={}, logId={}",
-                    task.getTaskType(), task.getLogId(), e);
+                    task.getTaskType(), task.getRawLogId(), e);
             return false;
         }
     }
