@@ -2,21 +2,32 @@ spring:
   application:
     name: ai-log
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: localhost:9092 #
     listener:
-      ack-mode: manual
-      concurrency: 1
+      ack-mode: manual_immediate
+      concurrency: 10  # 동시 처리 스레드 수 증가 (CPU 코어 수에 맞게 조정)
       retry:
         enabled: true
         max-attempts: 3
         backoff:
           interval: 1000
           multiplier: 2.0
+          # 배치 처리 설정 추가
+          max-poll-records: 100  # 한 번에 가져올 최대 레코드 수
+          poll-timeout: 30000    # 폴링 타임아웃 (30초)
     consumer:
       group-id: spring-log-analyzer
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # 성능 최적화 설정 추가
+      max-poll-records: 100
+      fetch-min-size: 50000  # 최소 페치 크기 (50KB)
+      fetch-max-wait: 500    # 최대 대기 시간 (500ms)
+      properties:
+        max.partition.fetch.bytes: 1048576  # 파티션당 최대 페치 크기 (1MB)
+        session.timeout.ms: 30000           # 세션 타임아웃
+        heartbeat.interval.ms: 3000         # 하트비트 간격
   datasource:
     jdbc-url: jdbc:postgresql://localhost:5432/test-db
     driver-class-name: org.postgresql.Driver

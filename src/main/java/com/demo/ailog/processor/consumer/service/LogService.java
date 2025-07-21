@@ -40,6 +40,26 @@ public class LogService {
         }
     }
 
+    /**
+     * 배치 저장 메서드 (대용량 처리용)
+     *
+     * @param dtoList 저장할 로그 DTO 리스트
+     * @return 저장된 개수
+     */
+    @Transactional
+    public int saveBatch(List<LogParseDTO> dtoList) {
+        try {
+            List<RawLogEntity> entities = dtoList.stream()
+                    .map(mapper::toEntity)
+                    .toList();
+
+            List<RawLogEntity> savedEntities = repository.saveAll(entities);
+            return savedEntities.size();
+        } catch (Exception e) {
+            throw new LogPersistenceException("Failed to save batch logs: " + e.getMessage(), null);
+        }
+    }
+
     public List<RawLogEntity> findByTimestampBetween(LocalDateTime startDate, LocalDateTime endDate) {
         return repository.findByTimestampBetween(startDate, endDate);
     }
@@ -49,9 +69,11 @@ public class LogService {
         return repository.findByProcessedFalseAndLogLevelIn(targets, limitSize);
     }
 
+    /**
+     * 작업 진행 사항 저장
+     */
     @Transactional
     public void updateProcessed(Long id) {
-        log.info("========updateProcessed========");
         repository.updateProcessed(id); // processed=true 저장
     }
 

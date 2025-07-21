@@ -27,6 +27,11 @@ public class FailedTaskService {
 
     private final AnalogyService analogyService;
 
+    /**
+     * 실패 로직
+     * - 재시도 프로세스를 태우기 위한 기록 용도
+     * - 트랜잭션 에러 나지 않도록 매번 새로 생성할 수 있도록 수정
+     */
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void saveFailedTask(Long logId, TaskType taskType, String errorMessage) {
         FailedTask failedTask = FailedTask.builder()
@@ -74,6 +79,7 @@ public class FailedTaskService {
 
     /**
      * 실패한 테스트 처리 프로세스
+     * - AI 요약 처리
      */
     @Transactional
     public boolean retryTask(FailedTask task) {
