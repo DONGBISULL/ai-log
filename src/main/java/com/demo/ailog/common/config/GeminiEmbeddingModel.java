@@ -34,9 +34,9 @@ public class GeminiEmbeddingModel implements EmbeddingModel {
     private final ObjectMapper objectMapper;
 
     public GeminiEmbeddingModel(
-            @Value("${spring.ai.openai.api-key}") String apiKey,
-            @Value("${spring.ai.openai.embedding.base-url}") String baseUrl,
-            @Value("${spring.ai.openai.embedding.options.model}") String model,
+            @Value("${ai.embed.gemini.api-key}") String apiKey,
+            @Value("${ai.embed.gemini.base-url}") String baseUrl,
+            @Value("${ai.embed.gemini.model}") String model,
             @Value("${spring.ai.vectorstore.pgvector.dimensions}") Integer dimensions, ObjectMapper objectMapper
     ) {
         this.apiKey = apiKey;
