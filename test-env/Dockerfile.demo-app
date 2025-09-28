@@ -1,0 +1,6 @@
+FROM eclipse-temurin:21-jdk-alpine
+RUN mkdir -p /var/log/demo-app && \
+chmod -R 777 /var/log/demo-app
+
+COPY app.jar /app.jar
+ENTRYPOINT ["java", "-jar", "/app.jar"]

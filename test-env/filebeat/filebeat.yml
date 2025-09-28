@@ -1,0 +1,23 @@
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /log/demo-app/*.log
+    multiline.pattern: '^\d{4}-\d{2}-\d{2}' # 로그의 시작 패턴
+    multiline.negate: true
+    multiline.match: after
+    fields:
+      app_type: spring
+      hostname: ${HOSTNAME}
+    fields_under_root: true
+    processors:
+      - add_host_metadata:
+         when.not.contains.tags: forwarded
+output.kafka:
+  hosts: ["kafka:29092"]
+  topic: 'raw-logs.%{[app_type]}'
+  partition.round_robin:
+    reachable_only: true
+  required_acks: 1
+  compression: gzip
+  max_message_bytes: 1000000
