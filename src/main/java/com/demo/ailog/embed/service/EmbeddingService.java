@@ -25,34 +25,6 @@ public class EmbeddingService {
 
     private final VectorStore vectorStore;
 
-//    public void test() {
-//        List<RawLogEntity> list = logService.findByTimestampBetween(LocalDateTime.of(2025, 07, 15, 0, 0, 0), LocalDateTime.of(2025, 07, 16, 23, 59, 59));
-//        List<Document> documents = new ArrayList<>();
-//        for (RawLogEntity entity : list) {
-//            Document document = getDocument(entity.getMessage());
-//            if (document != null) {
-//                String rawId = document.getMetadata().get("rawLogId").toString();
-//                ErrorAnalysisDTO analysis = service.findByRawId(Long.valueOf(rawId));
-//                ErrorAnalysisDTO newLog = analysis.toBuilder()
-//                        .id(null)
-//                        .rawLogId(Long.valueOf(rawId))
-//                        .build();
-//                service.add(newLog);
-//            } else {
-//                documents.add(createDocument(entity));
-//            }
-//        }
-//        vectorStore.add(documents);
-//    }
-
-
-//    private Document createDocument(RawLogEntity entity) {
-//        Document document = new Document(entity.getMessage());
-//        document.getMetadata().put("createAt", LocalDateTime.now());
-//        document.getMetadata().put("rawLogId", entity.getId());
-//        return document;
-//    }
-
     public void addVectorLog(String message, ErrorAnalysisDTO dto) {
         Document document = new Document(message);
         document.getMetadata().put("rawLogId", dto.getRawLogId());
