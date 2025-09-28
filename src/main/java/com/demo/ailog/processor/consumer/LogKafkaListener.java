@@ -1,6 +1,6 @@
 package com.demo.ailog.processor.consumer;
 
-import com.demo.ailog.common.exception.LogParsingException;
+import com.demo.ailog.common.exception.ParsingException;
 import com.demo.ailog.common.exception.LogPersistenceException;
 import com.demo.ailog.processor.consumer.service.LogProcessingService;
 import jakarta.transaction.Transactional;
@@ -31,7 +31,10 @@ public class LogKafkaListener {
      * - 성능 최적화를 위해 로그 출력 최소화
      */
     @KafkaListener(topics = {"raw-logs.spring", "raw-logs.nginx"}, 
-                   containerFactory = "batchKafkaListenerContainerFactory")
+                   containerFactory = "batchKafkaListenerContainerFactory",
+                   properties = {
+                    "auto.offset.reset=latest",
+                })
     @Async("logProcessingExecutor")
     public CompletableFuture<Void> processBatchLogs(
             @Payload List<ConsumerRecord<String, String>> records,
@@ -90,7 +93,7 @@ public class LogKafkaListener {
             service.process(traceId, spanId, appType, value);
             ack.acknowledge();
             
-        } catch (LogParsingException e) {
+        } catch (ParsingException e) {
             log.error("긴급 로그 파싱 실패: {}", e.getMessage());
             ack.acknowledge();
         } catch (LogPersistenceException e) {

@@ -1,6 +1,6 @@
 package com.demo.ailog.processor.consumer.service;
 
-import com.demo.ailog.common.exception.LogParsingException;
+import com.demo.ailog.common.exception.ParsingException;
 import com.demo.ailog.processor.consumer.domain.LogParseDTO;
 import com.demo.ailog.processor.consumer.parser.LogParserManager;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -19,9 +19,9 @@ public class LogParseService {
         try {
             return parserManager.parse(appType, rawLog);
         } catch (JsonProcessingException e) {
-            throw new LogParsingException(e.getMessage());
+            throw new ParsingException(e.getMessage());
         } catch (NoSuchAlgorithmException e) {
-            throw new LogParsingException(e.getMessage());
+            throw new ParsingException(e.getMessage());
         }
     }
 

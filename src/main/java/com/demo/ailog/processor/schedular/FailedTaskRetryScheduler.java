@@ -16,7 +16,7 @@ public class FailedTaskRetryScheduler {
 
     private final FailedTaskService service;
 
-    @Scheduled(fixedDelay = 1000 * 60 * 2) // 2분마다 실행
+   @Scheduled(fixedDelay = 1000 * 60 * 4) // 4분마다 실행
     public void retryFailedTasks() {
         List<FailedTask> retryableTasks = service.getRetryableTasks();
         log.info("Retrying tasks  {} ", retryableTasks.size());

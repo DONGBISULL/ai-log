@@ -25,7 +25,8 @@ public class AIErrorAnalysisSchedular {
 
     private final FailedTaskService failedTaskService;
 
-    @Scheduled(fixedDelay = 60000 * 3)
+   // 테스트용이므로 요약 LLM을 더 빠르게 실행하도록 설정
+   @Scheduled(fixedDelay = 60000 * 2)
     public void summarizeLogs() {
         List<RawLogEntity> targets = service.findByProcessedFalseAndLogLevelIn(
                 List.of(LogLevel.ERROR, LogLevel.WARN)
