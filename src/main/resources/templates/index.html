@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>로그 분석 대시보드</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+<div id="app" v-cloak class="container my-4">
+    <!-- 날짜 선택 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <label class="form-label">시작 날짜</label>
+            <input type="date" v-model="startDate" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">종료 날짜</label>
+            <input type="date" v-model="endDate" class="form-control">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button class="btn btn-primary w-100" @click="fetchAnalysis" :disabled="loading || !isValidRange">
+                {{ loading ? '분석 중...' : '분석 실행' }}
+            </button>
+        </div>
+    </div>
+
+    <!-- 전체 화면 오버레이 -->
+    <div v-if="loading" class="loading-overlay d-flex justify-content-center align-items-center">
+        <div class="card shadow-lg border-0" style="min-width: 320px;">
+            <div class="card-body text-center">
+                <div class="spinner-border mb-3" role="status" aria-live="polite" aria-busy="true">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="fw-semibold mb-1">분석 실행 중…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 에러 메시지 -->
+    <div v-if="error" class="alert alert-danger" role="alert">
+        <strong>Error!</strong> {{ error }}
+    </div>
+
+    <!-- 분석 결과 대시보드 -->
+    <div v-if="analysisResult">
+        <!-- 요약 통계 카드 -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="card-title">시스템 상태</h6>
+                        <span class="badge"
+                              :class="{
+                                  'bg-danger': analysisResult.conclusion.systemHealth === 'Critical',
+                                  'bg-warning': analysisResult.conclusion.systemHealth === 'Warning',
+                                  'bg-success': analysisResult.conclusion.systemHealth === 'Healthy'
+                              }">
+                            {{ analysisResult.conclusion.systemHealth }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="card-title">총 에러 수</h6>
+                        <h2>{{ analysisResult?.errorStatistics?.totalErrors || 0 }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="card-title">고유 패턴 수</h6>
+                        <h2>{{ analysisResult?.errorStatistics?.uniquePatternCount || 0 }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="card-title">즉시 조치 필요</h6>
+                        <h2>{{ analysisResult?.conclusion?.immediateAction === true ? '예' : '아니오' }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 심각도별 분류 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">심각도별 에러 분류</h5>
+                <div v-for="(errors, severity) in analysisResult?.severityBreakdown || {}" :key="severity" class="mb-3">
+                    <h6>{{ severity }}</h6>
+                    <div v-for="error in (Array.isArray(errors) ? errors : [])" :key="error?.patternHash"
+                         class="border-bottom py-2">
+                        <h6 class="fw-bold">{{ error?.title || '제목 없음' }}</h6>
+                        <p class="mb-1">{{ error?.rootCause || '원인 미상' }}</p>
+                        <small class="text-muted">권장 조치: {{ error?.recommendation || '권장사항 없음' }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 자주 발생하는 에러 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">자주 발생하는 에러</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>에러 유형</th>
+                            <th>발생 횟수</th>
+                            <th>컴포넌트</th>
+                            <th>설명</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="error in (analysisResult?.errorStatistics?.topFrequentErrors || [])" 
+                            :key="error?.patternHash">
+                            <td>{{ error?.errorType || 'Unknown' }}</td>
+                            <td>{{ typeof error?.occurrences === 'number' ? error.occurrences : 0 }}</td>
+                            <td>{{ error?.exceptionClass || 'Unknown' }}</td>
+                            <td>{{ error?.summary || '설명 없음' }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 패턴 분석 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">패턴 분석</h5>
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>에러 타입</th>
+                        <th>발생 횟수</th>
+                        <th>컴포넌트</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr v-for="pattern in (analysisResult?.patternAnalysis?.recurringPatterns || [])"
+                        :key="pattern?.patternHash">
+                        <td>{{ pattern?.errorType || 'Unknown' }}</td>
+                        <td>{{ typeof pattern?.count === 'number' ? pattern.count : 0 }}</td>
+                        <td>
+                            <span v-for="comp in (Array.isArray(pattern?.components) ? pattern.components : [])"
+                                  :key="comp"
+                                  class="badge bg-secondary me-1">
+                                {{ comp || 'Unknown' }}
+                            </span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 결론 및 권장사항 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">결론 및 권장사항</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>개발팀 우선순위</h6>
+                        <ul class="list-unstyled">
+                            <li v-for="priority in (Array.isArray(analysisResult?.conclusion?.devPriorities) ? analysisResult.conclusion.devPriorities : [])"
+                                :key="priority"
+                                class="mb-1">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>{{ priority || '우선순위 없음' }}
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>운영팀 모니터링 항목</h6>
+                        <ul class="list-unstyled">
+                            <li v-for="item in (Array.isArray(analysisResult?.conclusion?.opsMonitoring) ? analysisResult.conclusion.opsMonitoring : [])"
+                                :key="item"
+                                class="mb-1">
+                                <i class="bi bi-eye-fill text-primary me-2"></i>{{ item || '모니터링 항목 없음' }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const {createApp, ref, computed, watch, onMounted} = Vue
+
+    createApp({
+        setup() {
+            const startDate = ref('')
+            const endDate = ref('')
+            const loading = ref(false)
+            const error = ref(null)
+            const analysisResult = ref(null)
+            const showRawJson = ref(false)
+
+            const isValidRange = computed(() => {
+                if (!startDate.value || !endDate.value) return false
+                const start = Date.parse(startDate.value)
+                const end = Date.parse(endDate.value)
+                return !isNaN(start) && !isNaN(end) && start <= end
+            })
+
+            const fetchAnalysis = async () => {
+                if (!isValidRange.value) {
+                    error.value = "유효한 날짜 범위를 선택해주세요."
+                    return
+                }
+
+                loading.value = true
+                error.value = null
+
+                try {
+                    const config = {
+                        params: {
+                            startTime: `${startDate.value}T00:00:00`,
+                            endTime: `${endDate.value}T23:59:59.999999999`,
+                        },
+                        timeout: 300000,  // 5분으로 설정
+                        timeoutErrorMessage: 'AI 분석 시간이 초과되었습니다.'
+                    }
+
+                    const apiUrl = '/log-analysis';
+                    const response = await axios.get(apiUrl, config)
+                    console.log('Full response:', response)
+                    analysisResult.value = response.data
+
+                } catch (e) {
+                    error.value = "요청 중 네트워크 오류가 발생했습니다."
+                    console.error('Analysis error:', e)
+                } finally {
+                    loading.value = false
+                }
+            }
+
+            return {
+                startDate,
+                endDate,
+                loading,
+                error,
+                analysisResult,
+                showRawJson,
+                isValidRange,
+                fetchAnalysis,
+            }
+        }
+    }).mount('#app')
+</script>
+<style>
+    .loading-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, .35);
+        backdrop-filter: blur(2px);
+        z-index: 1080;
+    }
+</style>
+</body>
+</html>

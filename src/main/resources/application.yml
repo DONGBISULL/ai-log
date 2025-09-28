@@ -31,7 +31,7 @@ spring:
   datasource:
     jdbc-url: jdbc:postgresql://localhost:5432/test-db
     driver-class-name: org.postgresql.Driver
-    username: '사용자명'
+    username: '유저명'
     password: '비밀번호'
   jpa:
     hibernate:
@@ -42,15 +42,8 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   ai:
-    # 올라마
-    #    ollama:
-    #      base-url: http://localhost:11434
-    #      chat:
-    #        options:
-    #          model: llama3:8b
-    #          temperature: 0.7
-    #          timeout: 60s
-    # 제미나이 (vertex) 유료라 다른 방식으로 수정
+    model:
+      chat: none
     vectorstore:
       pgvector:
         index-type: HNSW # 다층 그래프 생성 쿼리 성능 더 좋음
@@ -58,20 +51,16 @@ spring:
         dimensions: 1536 # 임베딩 차원 PgVectorStore 임베딩 열 설정
         max-document-batch-size: 10000 # 단일 배치 처리할 수 있는 문서 최대 수
         schema-validation: true # 스키마 테이블 이름 검증을 통해 유효 객체 확인
-        initialize-schema: false # 아무 것도 없을 경우 true 로 설정할 시 자동으로 테이블 생성
+        initialize-schema: true # 아무 것도 없을 경우 true 로 설정할 시 자동으로 테이블 생성
         vector-table-name: 'vector_log'
-    openai:
-      embedding:
-        base-url: 'https://generativelanguage.googleapis.com'
-        options:
-          model: "gemini-embedding-001"
-      api-key: 'API키'
-      base-url: 'https://generativelanguage.googleapis.com/v1beta/openai'
-      chat:
-        completions-path: /chat/completions
-        options:
-          model: gemini-2.0-flash
-    enabled: true
+ai:
+  openai-key: 'API 키'
+  embed:
+    gemini:
+      api-key: 'API 키'
+      base-url: 'https://generativelanguage.googleapis.com'
+      model: 'gemini-embedding-001'
+
 server:
   port: 8084
   tomcat:
